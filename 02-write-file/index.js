@@ -11,6 +11,8 @@ const recordToTxt = () => {
   });
 };
 
+recordToTxt();
+
 stdout.write('Write your text:\n');
 
 stdin.on('data', (data) => {
