@@ -7,7 +7,7 @@ let text = '';
 
 const recordToTxt = () => {
   fs.writeFile(filePath, text, (err) => {
-    if (err) { stdout.write(err);}
+    if (err) { stdout.write(err + '\n');}
   });
 };
 
