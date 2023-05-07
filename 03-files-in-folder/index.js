@@ -6,7 +6,7 @@ function printFileInformation(file) {
   const filesecretFolderPath = path.join(secretFolderPath, file);
   fs.stat(filesecretFolderPath, (err, stats) => {
     if (err) console.log(err);
-    if (stats.isFile()) {
+    if (stats.isFile()  && file !== '.DS_Store') {
       const sizeInKb = stats.size / 1024;
       const pathInfo = path.parse(filesecretFolderPath)
       const extension = pathInfo.ext.slice(1);
