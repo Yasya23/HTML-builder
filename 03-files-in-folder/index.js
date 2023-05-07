@@ -7,7 +7,7 @@ function printFileInformation(file) {
   fs.stat(filesecretFolderPath, (err, stats) => {
     if (err) console.log(err);
     if (stats.isFile()) {
-      const sizeInKb = stats.size /1024;
+      const sizeInKb = stats.size / 1024;
       const pathInfo = path.parse(filesecretFolderPath)
       const extension = pathInfo.ext.slice(1);
       const name = pathInfo.name;
