@@ -14,63 +14,60 @@ function buildHtml() {
     if (err) console.log(err);
   });
 
-  const stream = fs.createReadStream(indexHtml, { encoding: 'utf8' });
-  const headerContent = fs.createReadStream(path.join(__dirname, 'components/header.html'), 'utf8');
-  const footerContent = fs.createReadStream(path.join(__dirname, 'components/footer.html'), 'utf8');
-  const mainContent = fs.createReadStream(path.join(__dirname, 'components/articles.html'), 'utf8');
+  const componentsPath = path.join(__dirname, 'components');
+  const names = [];
 
-  let dataAccumulator = '';
-  
-  stream.on('data', data => {
-    dataAccumulator += data.toString(); 
-    const matchesHeader = dataAccumulator.match(/{{header}}/g);
-    const matchesFooter = dataAccumulator.match(/{{footer}}/g);
-    const matchesArticles = dataAccumulator.match(/{{articles}}/g);
-
-    if (matchesHeader) {
-      headerContent.on('data', dataHeader => {
-        dataAccumulator = dataAccumulator.replaceAll(matchesHeader, dataHeader); 
-        fs.writeFile(indexHtml, dataAccumulator, (err) => {
-          if (err) console.log(err);
-        });
+  fs.readdir(componentsPath, (err, files) => {
+    if (err) return;
+    files.forEach((file) => {
+      const filePath = path.join(componentsPath, file);
+      fs.stat(filePath, (err, stats) => {
+        if (err) console.log(err);
+        if (stats.isFile()) {
+          names.push(path.parse(filePath).name);
+        }
       });
-    }
-
-    if (matchesFooter) {
-      footerContent.on('data', dataFooter => {
-        dataAccumulator = dataAccumulator.replaceAll(matchesFooter, dataFooter); 
-        fs.writeFile(indexHtml, dataAccumulator, (err) => {
-          if (err) console.log(err);
-        });
-      });
-    }
-
-    if (matchesArticles) {
-      mainContent.on('data', dataArticles => {
-        dataAccumulator = dataAccumulator.replaceAll(matchesArticles, dataArticles); 
-        fs.writeFile(indexHtml, dataAccumulator, (err) => {
-          if (err) console.log(err);
-        });
-      });
-    }
+    });
   });
 
-  stream.on('error', err => console.error(err));
+  const stream = fs.createReadStream(indexHtml, { encoding: 'utf8' });
+  let dataAccumulator = '';
+
+  stream.on('data', (data) => {
+    dataAccumulator += data.toString();
+  });
+
+  stream.on('end', () => {
+    Promise.all(
+      names.map((name) => {
+        const matches = dataAccumulator.match(new RegExp(`{{${name}}}`, 'g'));
+
+        if (matches) {
+          return fs.promises
+            .readFile(path.join(componentsPath, `${name}.html`), 'utf8')
+            .then((content) => {
+              dataAccumulator = dataAccumulator.replaceAll(matches[0], content);
+            })
+            .catch((err) => console.log(err));
+        }
+      })
+    ).then(() => {
+      fs.writeFile(indexHtml, dataAccumulator, (err) => {
+        if (err) console.log(err);
+      });
+    });
+  });
+
+  stream.on('error', (err) => console.error(err));
 }
-
-
-
 
 function buildStyleCss() {
   const bundlePath = path.join(distFolder, 'style.css');
   const bundleStream = fs.createWriteStream(bundlePath);
 
   fs.readdir(stylesFolder, (err, files) => {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    const cssFiles = files.filter(file => file.endsWith('.css'));
+    if (err) return;
+    const cssFiles = files.filter((file) => file.endsWith('.css'));
     cssFiles.forEach((file) => {
       const filePath = path.join(stylesFolder, file);
       const stream = fs.createReadStream(filePath, { encoding: 'utf8' });
@@ -78,7 +75,7 @@ function buildStyleCss() {
       stream.pipe(bundleStream, { end: false });
     });
   });
-};
+}
 
 // const removeDeletedFiles = (copyPath, files) => {
 //   fs.readdir(copyPath, (err, copyFiles) => {
@@ -97,28 +94,28 @@ function buildStyleCss() {
 //   });
 // };
 
-function copyAssetsFiles (folderPath, copyPath) {
+function copyAssetsFiles(folderPath, copyPath) {
   fs.mkdir(copyPath, { recursive: true }, (err) => {
     if (err) console.log(err);
-  fs.readdir(folderPath, (err, files) => {
-    if (err) console.log(err);
-    files.forEach((file) => {
-      const folderFilePath = path.join(folderPath, file);
-      const copyFilePath = path.join(copyPath, file);
-      fs.stat(folderFilePath, (err, stat) => {
-        if (err) console.log(err);
-        if (stat.isDirectory()) {
-          copyAssetsFiles(folderFilePath, copyFilePath);
-        } else {
-          fs.copyFile(folderFilePath, copyFilePath, (err) => {
-            if (err) console.log(err);
-          });
-        }
+    fs.readdir(folderPath, (err, files) => {
+      if (err) console.log(err);
+      files.forEach((file) => {
+        const folderFilePath = path.join(folderPath, file);
+        const copyFilePath = path.join(copyPath, file);
+        fs.stat(folderFilePath, (err, stat) => {
+          if (err) console.log(err);
+          if (stat.isDirectory()) {
+            copyAssetsFiles(folderFilePath, copyFilePath);
+          } else {
+            fs.copyFile(folderFilePath, copyFilePath, (err) => {
+              if (err) console.log(err);
+            });
+          }
+        });
       });
     });
   });
-});
-};
+}
 
 function buildProject() {
   fs.mkdir(distFolder, { recursive: true }, (err) => {
