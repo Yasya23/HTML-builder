@@ -30,27 +30,34 @@ function buildHtml() {
     if (matchesHeader) {
       headerContent.on('data', dataHeader => {
         dataAccumulator = dataAccumulator.replaceAll(matchesHeader, dataHeader); 
-        fs.writeFile(indexHtml, dataAccumulator)
+        fs.writeFile(indexHtml, dataAccumulator, (err) => {
+          if (err) console.log(err);
+        });
       });
     }
 
     if (matchesFooter) {
       footerContent.on('data', dataFooter => {
         dataAccumulator = dataAccumulator.replaceAll(matchesFooter, dataFooter); 
-        fs.writeFile(indexHtml, dataAccumulator)
+        fs.writeFile(indexHtml, dataAccumulator, (err) => {
+          if (err) console.log(err);
+        });
       });
     }
 
     if (matchesArticles) {
       mainContent.on('data', dataArticles => {
         dataAccumulator = dataAccumulator.replaceAll(matchesArticles, dataArticles); 
-        fs.writeFile(indexHtml, dataAccumulator)
+        fs.writeFile(indexHtml, dataAccumulator, (err) => {
+          if (err) console.log(err);
+        });
       });
     }
   });
 
   stream.on('error', err => console.error(err));
 }
+
 
 
 
