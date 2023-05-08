@@ -77,22 +77,27 @@ function buildStyleCss() {
   });
 }
 
-// const removeDeletedFiles = (copyPath, files) => {
-//   fs.readdir(copyPath, (err, copyFiles) => {
-//     if (err) console.log(err);
-//     copyFiles.forEach((file) => {
-//       const copyFilePath = path.join(copyPath, file);
-//       fs.stat(copyFilePath, (err, stat) => {
-//         if (err) console.log(err);
-//         if (!stat.isDirectory() && !files.includes(file)) {
-//           fs.unlink(copyFilePath, (err) => {
-//             if (err) console.log(err);
-//           });
-//         }
-//       });
-//     });
-//   });
-// };
+function removeDeletedFiles(copyPath) {
+  fs.mkdir(copyPath, { recursive: true }, (err) => {
+    if (err) console.log(err);
+    fs.readdir(copyPath, (err, files) => {
+      if (err) console.log(err);
+      files.forEach((file) => {
+        const copyFilePath = path.join(copyPath, file);
+        fs.stat(copyFilePath, (err, stat) => {
+          if (err) console.log(err);
+          if (stat && stat.isDirectory()) {
+            removeDeletedFiles(copyFilePath);
+          } else if (!stat.isDirectory()) {
+            fs.unlink(copyFilePath, (err) => {
+              if (err) console.log(err);
+            });
+          }
+        });
+      });
+    });
+  });
+}
 
 function copyAssetsFiles(folderPath, copyPath) {
   fs.mkdir(copyPath, { recursive: true }, (err) => {
@@ -123,6 +128,7 @@ function buildProject() {
   });
   buildHtml();
   buildStyleCss();
+  removeDeletedFiles(copyAssets);
   copyAssetsFiles(assets, copyAssets);
 }
 
