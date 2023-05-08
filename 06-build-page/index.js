@@ -38,23 +38,35 @@ function buildHtml() {
   });
 
   stream.on('end', () => {
-    Promise.all(
-      names.map((name) => {
-        const matches = dataAccumulator.match(new RegExp(`{{${name}}}`, 'g'));
+    let completed = 0;
+    names.forEach((name) => {
+      const matches = dataAccumulator.match(new RegExp(`{{${name}}}`, 'g'));
 
-        if (matches) {
-          return fs.promises
-            .readFile(path.join(componentsPath, `${name}.html`), 'utf8')
-            .then((content) => {
-              dataAccumulator = dataAccumulator.replaceAll(matches[0], content);
-            })
-            .catch((err) => console.log(err));
+      if (matches) {
+        fs.readFile(
+          path.join(componentsPath, `${name}.html`),
+          'utf8',
+          (err, content) => {
+            if (err) console.log(err);
+
+            dataAccumulator = dataAccumulator.replaceAll(matches[0], content);
+            completed++;
+
+            if (completed === names.length) {
+              fs.writeFile(indexHtml, dataAccumulator, (err) => {
+                if (err) console.log(err);
+              });
+            }
+          }
+        );
+      } else {
+        completed++;
+        if (completed === names.length) {
+          fs.writeFile(indexHtml, dataAccumulator, (err) => {
+            if (err) console.log(err);
+          });
         }
-      })
-    ).then(() => {
-      fs.writeFile(indexHtml, dataAccumulator, (err) => {
-        if (err) console.log(err);
-      });
+      }
     });
   });
 
